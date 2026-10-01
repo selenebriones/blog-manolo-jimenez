@@ -7,7 +7,8 @@ import { draftMode } from 'next/headers'
 import React, { cache } from 'react'
 import { homeStatic } from '@/endpoints/seed/home-static'
 
-import { RenderBlocks } from '@/blocks/RenderBlocks'
+import { cn } from '@/utilities/ui'
+import { endsWithFullBleed, RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
@@ -64,18 +65,27 @@ export default async function Page({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
-  const { hero, layout } = page
+  const { hero, layout, title } = page
 
   return (
-    <article className="pt-16 pb-24">
+    // El encabezado "Imagen con título" va pegado al header, sin espacio arriba.
+    // Separación con el footer: margen del último bloque (my-16) + pb-8 = 96 px, salvo que el
+    // último bloque tenga fondo propio (línea de tiempo): entonces va pegado al footer.
+    <article
+      className={cn(hero?.type !== 'pageTitle' && 'pt-16', !endsWithFullBleed(layout) && 'pb-8')}
+    >
       <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />
 
       {draft && <LivePreviewListener />}
 
-      <RenderHero {...hero} />
-      <RenderBlocks blocks={layout} />
+      <RenderHero {...hero} title={title} />
+      {/* Con encabezado de foto: pt-8 + margen del primer bloque (my-16) = 96 px bajo la foto.
+          Es padding (no margen) para que no se funda con el margen del bloque. */}
+      <div className={hero?.type === 'pageTitle' ? 'pt-8' : undefined}>
+        <RenderBlocks blocks={layout} />
+      </div>
     </article>
   )
 }

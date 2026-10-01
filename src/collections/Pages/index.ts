@@ -7,6 +7,11 @@ import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
+import { Gallery } from '../../blocks/Gallery/config'
+import { ProfileIntro } from '../../blocks/ProfileIntro/config'
+import { Proposals } from '../../blocks/Proposals/config'
+import { StoryMosaic } from '../../blocks/StoryMosaic/config'
+import { Timeline } from '../../blocks/Timeline/config'
 import { hero } from '@/heros/config'
 import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
@@ -21,8 +26,16 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 
+/**
+ * Páginas del sitio (Mi Historia, Propuestas, Contacto…).
+ * Cada página se arma con un encabezado opcional (hero) y bloques de contenido.
+ */
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
+  labels: {
+    singular: 'Página',
+    plural: 'Páginas',
+  },
   access: {
     create: authenticated,
     delete: authenticated,
@@ -38,6 +51,7 @@ export const Pages: CollectionConfig<'pages'> = {
   },
   admin: {
     defaultColumns: ['title', 'slug', 'updatedAt'],
+    group: 'Contenido',
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -58,28 +72,50 @@ export const Pages: CollectionConfig<'pages'> = {
     {
       name: 'title',
       type: 'text',
+      label: 'Título de la página',
       required: true,
+      admin: {
+        description:
+          'Nombre interno y título de la pestaña del navegador (si no se define uno en SEO).',
+      },
     },
     {
       type: 'tabs',
       tabs: [
         {
           fields: [hero],
-          label: 'Hero',
+          label: 'Encabezado',
+          description:
+            'Banner opcional al inicio de la página. Elige "Ninguno" si el primer bloque ya tiene título.',
         },
         {
           fields: [
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
+              label: 'Bloques de contenido',
+              labels: { singular: 'Bloque', plural: 'Bloques' },
+              blocks: [
+                ProfileIntro,
+                Timeline,
+                StoryMosaic,
+                Proposals,
+                Gallery,
+                CallToAction,
+                Content,
+                MediaBlock,
+                Archive,
+                FormBlock,
+              ],
               required: true,
               admin: {
                 initCollapsed: true,
               },
             },
           ],
-          label: 'Content',
+          label: 'Contenido',
+          description:
+            'Agrega, reordena (arrastrando) o elimina bloques. Cada bloque es una sección de la página.',
         },
         {
           name: 'meta',
@@ -113,6 +149,7 @@ export const Pages: CollectionConfig<'pages'> = {
     {
       name: 'publishedAt',
       type: 'date',
+      label: 'Fecha de publicación',
       admin: {
         position: 'sidebar',
       },

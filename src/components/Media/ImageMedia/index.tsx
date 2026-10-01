@@ -62,6 +62,8 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
   let height: number | undefined
   let alt = altFromProps
   let src: StaticImageData | string = srcFromProps || ''
+  // Punto focal marcado en Medios: al recortar (`fill` + object-cover) se centra ahí
+  let objectPosition: string | undefined
 
   if (!src && resource && typeof resource === 'object') {
     const { alt: altFromResource, height: fullHeight, url, width: fullWidth } = resource
@@ -73,6 +75,10 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
     const cacheTag = resource.updatedAt
 
     src = getMediaUrl(url, cacheTag)
+
+    if (fill && typeof resource.focalX === 'number' && typeof resource.focalY === 'number') {
+      objectPosition = `${resource.focalX}% ${resource.focalY}%`
+    }
   }
 
   const loading = loadingFromProps || (!priority ? 'lazy' : undefined)
@@ -85,7 +91,8 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
         .join(', ')
 
   return (
-    <picture className={cn(pictureClassName)}>
+    // Con `fill`, el <picture> ocupa todo el contenedor y sirve de ancla posicionada para la imagen
+    <picture className={cn(fill && 'absolute inset-0 block', pictureClassName)}>
       <NextImage
         alt={alt || ''}
         className={cn(imgClassName)}
@@ -98,6 +105,7 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
         loading={loading}
         sizes={sizes}
         src={src}
+        style={objectPosition ? { objectPosition } : undefined}
         width={!fill ? width : undefined}
       />
     </picture>

@@ -17,24 +17,13 @@ export const hero: Field = {
       name: 'type',
       type: 'select',
       defaultValue: 'lowImpact',
-      label: 'Type',
+      label: 'Tipo de encabezado',
       options: [
-        {
-          label: 'None',
-          value: 'none',
-        },
-        {
-          label: 'High Impact',
-          value: 'highImpact',
-        },
-        {
-          label: 'Medium Impact',
-          value: 'mediumImpact',
-        },
-        {
-          label: 'Low Impact',
-          value: 'lowImpact',
-        },
+        { label: 'Ninguno', value: 'none' },
+        { label: 'Imagen con título de la página', value: 'pageTitle' },
+        { label: 'Alto impacto (imagen a pantalla completa)', value: 'highImpact' },
+        { label: 'Impacto medio (texto e imagen)', value: 'mediumImpact' },
+        { label: 'Bajo impacto (solo texto)', value: 'lowImpact' },
       ],
       required: true,
     },
@@ -52,17 +41,25 @@ export const hero: Field = {
         },
       }),
       label: false,
+      admin: {
+        // El encabezado "Imagen con título" usa el título de la página; no lleva texto propio
+        condition: (_, { type } = {}) => type !== 'pageTitle',
+      },
     },
     linkGroup({
       overrides: {
         maxRows: 2,
+        admin: {
+          condition: (_, { type } = {}) => type !== 'pageTitle',
+        },
       },
     }),
     {
       name: 'media',
       type: 'upload',
+      label: 'Imagen',
       admin: {
-        condition: (_, { type } = {}) => ['highImpact', 'mediumImpact'].includes(type),
+        condition: (_, { type } = {}) => ['highImpact', 'mediumImpact', 'pageTitle'].includes(type),
       },
       relationTo: 'media',
       required: true,

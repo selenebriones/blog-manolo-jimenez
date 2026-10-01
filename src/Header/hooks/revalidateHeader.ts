@@ -6,7 +6,8 @@ export const revalidateHeader: GlobalAfterChangeHook = ({ doc, req: { payload, c
   if (!context.disableRevalidate) {
     payload.logger.info(`Revalidating header`)
 
-    revalidateTag('global_header', 'max')
+    // expire: 0 → quien edita ve el cambio en la siguiente carga (sin servir la versión anterior)
+    revalidateTag('global_header', { expire: 0 })
   }
 
   return doc

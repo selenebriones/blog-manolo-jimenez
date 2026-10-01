@@ -4,6 +4,12 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 
 import type { Post } from '../../../payload-types'
 
+/** La portada y el listado de noticias muestran posts, así que se revalidan con cada cambio. */
+const revalidateListings = () => {
+  revalidatePath('/')
+  revalidatePath('/posts')
+}
+
 export const revalidatePost: CollectionAfterChangeHook<Post> = ({
   doc,
   previousDoc,
@@ -17,6 +23,7 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
 
       revalidatePath(path)
       revalidateTag('posts-sitemap', 'max')
+      revalidateListings()
     }
 
     // If the post was previously published, we need to revalidate the old path
@@ -27,6 +34,7 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
 
       revalidatePath(oldPath)
       revalidateTag('posts-sitemap', 'max')
+      revalidateListings()
     }
   }
   return doc
@@ -38,6 +46,7 @@ export const revalidateDelete: CollectionAfterDeleteHook<Post> = ({ doc, req: { 
 
     revalidatePath(path)
     revalidateTag('posts-sitemap', 'max')
+    revalidateListings()
   }
 
   return doc

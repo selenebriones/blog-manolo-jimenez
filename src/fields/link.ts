@@ -6,11 +6,11 @@ export type LinkAppearances = 'default' | 'outline'
 
 export const appearanceOptions: Record<LinkAppearances, { label: string; value: string }> = {
   default: {
-    label: 'Default',
+    label: 'Predeterminado',
     value: 'default',
   },
   outline: {
-    label: 'Outline',
+    label: 'Contorno',
     value: 'outline',
   },
 }
@@ -25,6 +25,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
   const linkResult: GroupField = {
     name: 'link',
     type: 'group',
+    label: 'Enlace',
     admin: {
       hideGutter: true,
     },
@@ -42,11 +43,11 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
             defaultValue: 'reference',
             options: [
               {
-                label: 'Internal link',
+                label: 'Página o noticia del sitio',
                 value: 'reference',
               },
               {
-                label: 'Custom URL',
+                label: 'URL',
                 value: 'custom',
               },
             ],
@@ -60,7 +61,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
               },
               width: '50%',
             },
-            label: 'Open in new tab',
+            label: 'Abrir en otra pestaña',
           },
         ],
       },
@@ -74,7 +75,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
       admin: {
         condition: (_, siblingData) => siblingData?.type === 'reference',
       },
-      label: 'Document to link to',
+      label: 'Página o noticia',
       relationTo: ['pages', 'posts'],
       required: true,
     },
@@ -84,7 +85,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
       admin: {
         condition: (_, siblingData) => siblingData?.type === 'custom',
       },
-      label: 'Custom URL',
+      label: 'URL',
       required: true,
     },
   ]
@@ -108,7 +109,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
           admin: {
             width: '50%',
           },
-          label: 'Label',
+          label: 'Texto del enlace',
           required: true,
         },
       ],
@@ -128,7 +129,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
       name: 'appearance',
       type: 'select',
       admin: {
-        description: 'Choose how the link should be rendered.',
+        description: 'Cómo se ve el enlace.',
       },
       defaultValue: 'default',
       options: appearanceOptionsToUse,

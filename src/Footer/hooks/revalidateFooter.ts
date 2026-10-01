@@ -6,7 +6,8 @@ export const revalidateFooter: GlobalAfterChangeHook = ({ doc, req: { payload, c
   if (!context.disableRevalidate) {
     payload.logger.info(`Revalidating footer`)
 
-    revalidateTag('global_footer', 'max')
+    // expire: 0 → quien edita ve el cambio en la siguiente carga (sin servir la versión anterior)
+    revalidateTag('global_footer', { expire: 0 })
   }
 
   return doc

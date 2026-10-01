@@ -1,41 +1,53 @@
 'use client'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import React, { useState, useEffect } from 'react'
+
+import { Search as SearchIcon } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import React, { useEffect, useRef, useState } from 'react'
+
 import { useDebounce } from '@/utilities/useDebounce'
-import { useRouter } from 'next/navigation'
 
+/**
+ * Buscador de noticias: actualiza `?q=` mientras se escribe (con una pausa breve).
+ * Arranca con el término de la URL, así un enlace como /search?q=seguridad funciona
+ * (la versión de la plantilla lo borraba al cargar).
+ */
 export const Search: React.FC = () => {
-  const [value, setValue] = useState('')
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const initial = searchParams.get('q') ?? ''
 
+  const [value, setValue] = useState(initial)
   const debouncedValue = useDebounce(value)
+  const lastPushed = useRef(initial)
 
   useEffect(() => {
-    router.push(`/search${debouncedValue ? `?q=${debouncedValue}` : ''}`)
-  }, [debouncedValue, router])
+    const term = debouncedValue.trim()
+    if (term === lastPushed.current) return
+    lastPushed.current = term
+    router.replace(`${pathname}${term ? `?q=${encodeURIComponent(term)}` : ''}`, { scroll: false })
+  }, [debouncedValue, pathname, router])
 
   return (
-    <div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-        }}
-      >
-        <Label htmlFor="search" className="sr-only">
-          Search
-        </Label>
-        <Input
-          id="search"
-          onChange={(event) => {
-            setValue(event.target.value)
-          }}
-          placeholder="Search"
+    <form onSubmit={(event) => event.preventDefault()} role="search">
+      <label className="sr-only" htmlFor="search">
+        Buscar noticias
+      </label>
+      <div className="relative">
+        <SearchIcon
+          aria-hidden
+          className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-ink-muted"
         />
-        <button type="submit" className="sr-only">
-          submit
-        </button>
-      </form>
-    </div>
+        <input
+          autoComplete="off"
+          className="h-14 w-full rounded-lg border border-border bg-white pl-12 pr-4 text-lg text-ink shadow-card placeholder:text-ink-muted focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/20"
+          id="search"
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="Buscar por palabra clave, lugar o programa…"
+          type="search"
+          value={value}
+        />
+      </div>
+    </form>
   )
 }

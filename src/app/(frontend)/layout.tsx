@@ -2,29 +2,56 @@ import type { Metadata } from 'next'
 
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
-import { GeistSans } from 'geist/font/sans'
+import { Inter, Poppins } from 'next/font/google'
 import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
-import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
+import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getSiteSettings } from '@/utilities/getSiteSettings'
+
+// Inter para lectura (párrafos, UI) y Poppins para titulares: ambas sans-serif modernas
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
+  // Favicon: Configuración del sitio → Encabezado → Logotipo y barra superior
+  const header = await getCachedGlobal('header', 1)()
+  const favicon = header?.favicon && typeof header.favicon === 'object' ? header.favicon : null
 
   return (
-    <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>
+    // El sitio es institucional y solo tiene tema claro
+    <html
+      className={cn(inter.variable, poppins.variable, GeistMono.variable)}
+      data-theme="light"
+      lang="es-MX"
+      suppressHydrationWarning
+    >
       <head>
-        <InitTheme />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {favicon?.url ? (
+          <>
+            <link href={favicon.url} rel="icon" type={favicon.mimeType ?? undefined} />
+            <link href={favicon.url} rel="apple-touch-icon" />
+          </>
+        ) : (
+          <>
+            <link href="/favicon.ico" rel="icon" sizes="32x32" />
+            <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+          </>
+        )}
       </head>
       <body>
         <Providers>
@@ -35,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           />
 
           <Header />
-          {children}
+          <main className="flex-1">{children}</main>
           <Footer />
         </Providers>
       </body>
@@ -43,11 +70,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   )
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL(getServerSideURL()),
-  openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    creator: '@payloadcms',
-  },
+/** Título, descripción e imagen para compartir: Configuración del sitio → SEO y datos del sitio. */
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteSettings()
+  return {
+    metadataBase: new URL(getServerSideURL()),
+    title: {
+      default: site.defaultTitle,
+      template: `%s | ${site.siteName}`,
+    },
+    description: site.description,
+    openGraph: mergeOpenGraph(site),
+    twitter: {
+      card: 'summary_large_image',
+    },
+  }
 }

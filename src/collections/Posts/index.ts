@@ -27,8 +27,20 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { slugField } from 'payload'
 
+/**
+ * Noticias / Día a día.
+ *
+ * Además de la plantilla base (contenido enriquecido, SEO, borradores y publicación
+ * programada), agrega los campos que usa la portada:
+ * - `excerpt`:  extracto para tarjetas y mosaicos de portada.
+ * - `breaking`: muestra la etiqueta roja de "Última hora".
+ */
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
+  labels: {
+    singular: 'Noticia',
+    plural: 'Noticias',
+  },
   access: {
     create: authenticated,
     delete: authenticated,
@@ -42,13 +54,18 @@ export const Posts: CollectionConfig<'posts'> = {
     title: true,
     slug: true,
     categories: true,
+    heroImage: true,
+    excerpt: true,
+    publishedAt: true,
+    breaking: true,
     meta: {
       image: true,
       description: true,
     },
   },
   admin: {
-    defaultColumns: ['title', 'slug', 'updatedAt'],
+    defaultColumns: ['title', 'categories', 'publishedAt', '_status'],
+    group: 'Noticias',
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -69,7 +86,18 @@ export const Posts: CollectionConfig<'posts'> = {
     {
       name: 'title',
       type: 'text',
+      label: 'Titular',
       required: true,
+    },
+    {
+      name: 'excerpt',
+      type: 'textarea',
+      label: 'Extracto',
+      maxLength: 280,
+      admin: {
+        description:
+          'Resumen de 1–2 frases para las tarjetas y el hero de portada. Si se deja vacío se usa la meta descripción SEO.',
+      },
     },
     {
       type: 'tabs',
@@ -79,6 +107,7 @@ export const Posts: CollectionConfig<'posts'> = {
             {
               name: 'heroImage',
               type: 'upload',
+              label: 'Imagen principal',
               relationTo: 'media',
             },
             {
@@ -100,12 +129,13 @@ export const Posts: CollectionConfig<'posts'> = {
               required: true,
             },
           ],
-          label: 'Content',
+          label: 'Contenido',
         },
         {
           fields: [
             {
               name: 'relatedPosts',
+              label: 'Noticias relacionadas',
               type: 'relationship',
               admin: {
                 position: 'sidebar',
@@ -123,6 +153,7 @@ export const Posts: CollectionConfig<'posts'> = {
             {
               name: 'categories',
               type: 'relationship',
+              label: 'Categorías',
               admin: {
                 position: 'sidebar',
               },
@@ -130,7 +161,7 @@ export const Posts: CollectionConfig<'posts'> = {
               relationTo: 'categories',
             },
           ],
-          label: 'Meta',
+          label: 'Clasificación',
         },
         {
           name: 'meta',
@@ -162,8 +193,20 @@ export const Posts: CollectionConfig<'posts'> = {
       ],
     },
     {
+      name: 'breaking',
+      type: 'checkbox',
+      label: 'Última hora',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Muestra la etiqueta roja "Última hora". Úsalo con moderación.',
+      },
+    },
+    {
       name: 'publishedAt',
       type: 'date',
+      label: 'Fecha de publicación',
+      index: true,
       admin: {
         date: {
           pickerAppearance: 'dayAndTime',
@@ -184,6 +227,7 @@ export const Posts: CollectionConfig<'posts'> = {
     {
       name: 'authors',
       type: 'relationship',
+      label: 'Autores',
       admin: {
         position: 'sidebar',
       },

@@ -67,10 +67,11 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    pages: Page;
     posts: Post;
-    media: Media;
     categories: Category;
+    pages: Page;
+    media: Media;
+    subscribers: Subscriber;
     users: User;
     redirects: Redirect;
     forms: Form;
@@ -89,10 +90,11 @@ export interface Config {
     };
   };
   collectionsSelect: {
-    pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -106,16 +108,20 @@ export interface Config {
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {
+    'home-page': HomePage;
     header: Header;
     footer: Footer;
+    'site-settings': SiteSetting;
   };
   globalsSelect: {
+    'home-page': HomePageSelect<false> | HomePageSelect<true>;
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -153,81 +159,16 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages".
- */
-export interface Page {
-  id: string;
-  title: string;
-  hero: {
-    type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
-    richText?: {
-      root: {
-        type: string;
-        children: {
-          type: any;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-    links?:
-      | {
-          link: {
-            type?: ('reference' | 'custom') | null;
-            newTab?: boolean | null;
-            reference?:
-              | ({
-                  relationTo: 'pages';
-                  value: string | Page;
-                } | null)
-              | ({
-                  relationTo: 'posts';
-                  value: string | Post;
-                } | null);
-            url?: string | null;
-            label: string;
-            /**
-             * Choose how the link should be rendered.
-             */
-            appearance?: ('default' | 'outline') | null;
-          };
-          id?: string | null;
-        }[]
-      | null;
-    media?: (string | null) | Media;
-  };
-  layout: (CallToActionBlock | ContentBlock | MediaBlock | ArchiveBlock | FormBlock)[];
-  meta?: {
-    title?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (string | null) | Media;
-    description?: string | null;
-  };
-  publishedAt?: string | null;
-  /**
-   * When enabled, the slug will auto-generate from the title field on save and autosave.
-   */
-  generateSlug?: boolean | null;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
 export interface Post {
-  id: string;
+  id: number;
   title: string;
-  heroImage?: (string | null) | Media;
+  /**
+   * Resumen de 1–2 frases para las tarjetas y el hero de portada. Si se deja vacío se usa la meta descripción SEO.
+   */
+  excerpt?: string | null;
+  heroImage?: (number | null) | Media;
   content: {
     root: {
       type: string;
@@ -243,18 +184,22 @@ export interface Post {
     };
     [k: string]: unknown;
   };
-  relatedPosts?: (string | Post)[] | null;
-  categories?: (string | Category)[] | null;
+  relatedPosts?: (number | Post)[] | null;
+  categories?: (number | Category)[] | null;
   meta?: {
     title?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
-    image?: (string | null) | Media;
+    image?: (number | null) | Media;
     description?: string | null;
   };
+  /**
+   * Muestra la etiqueta roja "Última hora". Úsalo con moderación.
+   */
+  breaking?: boolean | null;
   publishedAt?: string | null;
-  authors?: (string | User)[] | null;
+  authors?: (number | User)[] | null;
   populatedAuthors?:
     | {
         id?: string | null;
@@ -271,12 +216,22 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Cada foto se comparte entre todas las secciones que la usan. Para cambiar la foto de una sola sección, sube un archivo nuevo desde esa sección; el archivo de una foto existente no se puede reemplazar.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
-  alt?: string | null;
+  id: number;
+  /**
+   * Describe lo que se ve en la imagen, p. ej. "El gobernador inaugura la clínica en Torreón".
+   */
+  alt: string;
+  /**
+   * Opcional. Ej. "Foto: Comunicación Social".
+   */
+  credit?: string | null;
+  sourceUrl?: string | null;
   caption?: {
     root: {
       type: string;
@@ -292,7 +247,7 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
-  folder?: (string | null) | FolderInterface;
+  folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -368,18 +323,18 @@ export interface Media {
  * via the `definition` "payload-folders".
  */
 export interface FolderInterface {
-  id: string;
+  id: number;
   name: string;
-  folder?: (string | null) | FolderInterface;
+  folder?: (number | null) | FolderInterface;
   documentsAndFolders?: {
     docs?: (
       | {
           relationTo?: 'payload-folders';
-          value: string | FolderInterface;
+          value: number | FolderInterface;
         }
       | {
           relationTo?: 'media';
-          value: string | Media;
+          value: number | Media;
         }
     )[];
     hasNextPage?: boolean;
@@ -394,17 +349,25 @@ export interface FolderInterface {
  * via the `definition` "categories".
  */
 export interface Category {
-  id: string;
+  id: number;
   title: string;
+  /**
+   * Usa el rojo solo para temas urgentes; el verde es el acento por defecto para no saturar la portada.
+   */
+  color: 'leaf' | 'brand' | 'sun' | 'alert';
+  /**
+   * Opcional. Se usa como texto introductorio en el listado de la categoría.
+   */
+  description?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
   slug: string;
-  parent?: (string | null) | Category;
+  parent?: (number | null) | Category;
   breadcrumbs?:
     | {
-        doc?: (string | null) | Category;
+        doc?: (number | null) | Category;
         url?: string | null;
         label?: string | null;
         id?: string | null;
@@ -418,8 +381,15 @@ export interface Category {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
-  name?: string | null;
+  id: number;
+  name: string;
+  /**
+   * Ej. "Coordinación de Comunicación Social". Se muestra junto a la firma.
+   */
+  position?: string | null;
+  role: 'admin' | 'editor' | 'autor';
+  avatar?: (number | null) | Media;
+  bio?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -427,6 +397,7 @@ export interface User {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -438,6 +409,274 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  /**
+   * Nombre interno y título de la pestaña del navegador (si no se define uno en SEO).
+   */
+  title: string;
+  hero: {
+    type: 'none' | 'pageTitle' | 'highImpact' | 'mediumImpact' | 'lowImpact';
+    richText?: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    links?:
+      | {
+          link: {
+            type?: ('reference' | 'custom') | null;
+            newTab?: boolean | null;
+            reference?:
+              | ({
+                  relationTo: 'pages';
+                  value: number | Page;
+                } | null)
+              | ({
+                  relationTo: 'posts';
+                  value: number | Post;
+                } | null);
+            url?: string | null;
+            label: string;
+            /**
+             * Cómo se ve el enlace.
+             */
+            appearance?: ('default' | 'outline') | null;
+          };
+          id?: string | null;
+        }[]
+      | null;
+    media?: (number | null) | Media;
+  };
+  layout: (
+    | ProfileIntroBlock
+    | TimelineBlock
+    | StoryMosaicBlock
+    | ProposalsBlock
+    | GalleryBlock
+    | CallToActionBlock
+    | ContentBlock
+    | MediaBlock
+    | ArchiveBlock
+    | FormBlock
+  )[];
+  meta?: {
+    title?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+    description?: string | null;
+  };
+  publishedAt?: string | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProfileIntroBlock".
+ */
+export interface ProfileIntroBlock {
+  /**
+   * Retrato vertical. Marca el punto focal en Medios para que el recorte quede bien.
+   */
+  image: number | Media;
+  /**
+   * Hasta 3 fotos en mosaico bajo el retrato: con 2 van lado a lado; con 3, la 1 a todo lo ancho y la 2 y 3 debajo. En escritorio se ajustan al alto del texto. Marca el punto focal en Medios para que el recorte quede bien.
+   */
+  photos?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  title: string;
+  /**
+   * Línea corta bajo el título, en azul.
+   */
+  subtitle?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Lema o firma que va centrado bajo el texto. Ideal: PNG o WebP con fondo transparente.
+   */
+  graphic?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'profileIntro';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TimelineBlock".
+ */
+export interface TimelineBlock {
+  title?: string | null;
+  /**
+   * En orden cronológico. Se ven mejor de 3 a 5 etapas.
+   */
+  items?:
+    | {
+        /**
+         * Ej. 2008 o 2018 – 2021
+         */
+        year: string;
+        /**
+         * Deja una línea en blanco para separar párrafos.
+         */
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'timeline';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StoryMosaicBlock".
+ */
+export interface StoryMosaicBlock {
+  /**
+   * Déjalo vacío si el texto va sin título.
+   */
+  title?: string | null;
+  /**
+   * Actívalo si la página no tiene hero (cada página debe tener un solo título principal).
+   */
+  isPageTitle?: boolean | null;
+  /**
+   * Línea corta bajo el título, en mayúsculas espaciadas.
+   */
+  subtitle?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Hasta 4 fotos, en este orden: 1) horizontal arriba · 2) vertical arriba · 3) vertical abajo · 4) horizontal abajo. Con 3 fotos y sin gráfico inferior: la 1 arriba a todo lo ancho y la 2 y 3 debajo. Marca el punto focal en Medios para que el recorte quede bien.
+   */
+  images?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Va arriba de la foto 1, en el espacio que deja la foto vertical. Ideal: PNG o WebP con fondo transparente.
+   */
+  topGraphic?: (number | null) | Media;
+  /**
+   * Va debajo de la foto 4. Ideal: PNG o WebP con fondo transparente.
+   */
+  bottomGraphic?: (number | null) | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'storyMosaic';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProposalsBlock".
+ */
+export interface ProposalsBlock {
+  title?: string | null;
+  intro?: string | null;
+  /**
+   * Se muestra a la derecha del título, encimada sobre el encabezado de la página (ej. el mapa de Coahuila). Ideal: PNG o WebP con fondo transparente, vertical.
+   */
+  featureImage?: (number | null) | Media;
+  /**
+   * Arrastra para reordenar.
+   */
+  items?:
+    | {
+        title: string;
+        color: 'brand' | 'leaf' | 'sun' | 'alert';
+        summary: string;
+        /**
+         * La frase destacada se pinta en color (verde, rojo, amarillo y azul, en ese orden) y el resto en gris.
+         */
+        points?:
+          | {
+              highlight: string;
+              text?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'proposals';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GalleryBlock".
+ */
+export interface GalleryBlock {
+  title?: string | null;
+  intro?: string | null;
+  /**
+   * Arrastra para reordenar. Se acomodan en columnas (3 en escritorio, 2 en tablet, 1 en celular).
+   */
+  images?:
+    | {
+        image: number | Media;
+        /**
+         * Se ve al pasar el cursor y en la vista ampliada.
+         */
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'gallery';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -467,16 +706,16 @@ export interface CallToActionBlock {
           reference?:
             | ({
                 relationTo: 'pages';
-                value: string | Page;
+                value: number | Page;
               } | null)
             | ({
                 relationTo: 'posts';
-                value: string | Post;
+                value: number | Post;
               } | null);
           url?: string | null;
           label: string;
           /**
-           * Choose how the link should be rendered.
+           * Cómo se ve el enlace.
            */
           appearance?: ('default' | 'outline') | null;
         };
@@ -517,16 +756,16 @@ export interface ContentBlock {
           reference?:
             | ({
                 relationTo: 'pages';
-                value: string | Page;
+                value: number | Page;
               } | null)
             | ({
                 relationTo: 'posts';
-                value: string | Post;
+                value: number | Post;
               } | null);
           url?: string | null;
           label: string;
           /**
-           * Choose how the link should be rendered.
+           * Cómo se ve el enlace.
            */
           appearance?: ('default' | 'outline') | null;
         };
@@ -542,7 +781,7 @@ export interface ContentBlock {
  * via the `definition` "MediaBlock".
  */
 export interface MediaBlock {
-  media: string | Media;
+  media: number | Media;
   id?: string | null;
   blockName?: string | null;
   blockType: 'mediaBlock';
@@ -569,12 +808,12 @@ export interface ArchiveBlock {
   } | null;
   populateBy?: ('collection' | 'selection') | null;
   relationTo?: 'posts' | null;
-  categories?: (string | Category)[] | null;
+  categories?: (number | Category)[] | null;
   limit?: number | null;
   selectedDocs?:
     | {
         relationTo: 'posts';
-        value: string | Post;
+        value: number | Post;
       }[]
     | null;
   id?: string | null;
@@ -586,7 +825,7 @@ export interface ArchiveBlock {
  * via the `definition` "FormBlock".
  */
 export interface FormBlock {
-  form: string | Form;
+  form: number | Form;
   enableIntro?: boolean | null;
   introContent?: {
     root: {
@@ -612,7 +851,7 @@ export interface FormBlock {
  * via the `definition` "forms".
  */
 export interface Form {
-  id: string;
+  id: number;
   title: string;
   fields?:
     | (
@@ -724,9 +963,6 @@ export interface Form {
       )[]
     | null;
   submitButtonLabel?: string | null;
-  /**
-   * Choose whether to display an on-page message or redirect to a different page after they submit the form.
-   */
   confirmationType?: ('message' | 'redirect') | null;
   confirmationMessage?: {
     root: {
@@ -746,9 +982,6 @@ export interface Form {
   redirect?: {
     url: string;
   };
-  /**
-   * Send custom emails when the form submits. Use comma separated lists to send the same email to multiple recipients. To reference a value from this form, wrap that field's name with double curly brackets, i.e. {{firstName}}. You can use a wildcard {{*}} to output all data and {{*:table}} to format it as an HTML table in the email.
-   */
   emails?:
     | {
         emailTo?: string | null;
@@ -757,9 +990,6 @@ export interface Form {
         replyTo?: string | null;
         emailFrom?: string | null;
         subject: string;
-        /**
-         * Enter the message that should be sent in this email.
-         */
         message?: {
           root: {
             type: string;
@@ -783,10 +1013,23 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  name?: string | null;
+  status: 'active' | 'unsubscribed';
+  source?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
-  id: string;
+  id: number;
   /**
    * You will need to rebuild the website when changing this field.
    */
@@ -796,11 +1039,11 @@ export interface Redirect {
     reference?:
       | ({
           relationTo: 'pages';
-          value: string | Page;
+          value: number | Page;
         } | null)
       | ({
           relationTo: 'posts';
-          value: string | Post;
+          value: number | Post;
         } | null);
     url?: string | null;
   };
@@ -812,8 +1055,8 @@ export interface Redirect {
  * via the `definition` "form-submissions".
  */
 export interface FormSubmission {
-  id: string;
-  form: string | Form;
+  id: number;
+  form: number | Form;
   submissionData?:
     | {
         field: string;
@@ -831,18 +1074,18 @@ export interface FormSubmission {
  * via the `definition` "search".
  */
 export interface Search {
-  id: string;
+  id: number;
   title?: string | null;
   priority?: number | null;
   doc: {
     relationTo: 'posts';
-    value: string | Post;
+    value: number | Post;
   };
   slug?: string | null;
   meta?: {
     title?: string | null;
     description?: string | null;
-    image?: (string | null) | Media;
+    image?: (number | null) | Media;
   };
   categories?:
     | {
@@ -860,7 +1103,7 @@ export interface Search {
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -877,7 +1120,7 @@ export interface PayloadKv {
  * via the `definition` "payload-jobs".
  */
 export interface PayloadJob {
-  id: string;
+  id: number;
   /**
    * Input data provided to the job
    */
@@ -969,52 +1212,56 @@ export interface PayloadJob {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
-        relationTo: 'pages';
-        value: string | Page;
-      } | null)
-    | ({
         relationTo: 'posts';
-        value: string | Post;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: string | Media;
+        value: number | Post;
       } | null)
     | ({
         relationTo: 'categories';
-        value: string | Category;
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
       } | null)
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null)
     | ({
         relationTo: 'redirects';
-        value: string | Redirect;
+        value: number | Redirect;
       } | null)
     | ({
         relationTo: 'forms';
-        value: string | Form;
+        value: number | Form;
       } | null)
     | ({
         relationTo: 'form-submissions';
-        value: string | FormSubmission;
+        value: number | FormSubmission;
       } | null)
     | ({
         relationTo: 'search';
-        value: string | Search;
+        value: number | Search;
       } | null)
     | ({
         relationTo: 'payload-folders';
-        value: string | FolderInterface;
+        value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -1024,10 +1271,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -1047,11 +1294,66 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  excerpt?: T;
+  heroImage?: T;
+  content?: T;
+  relatedPosts?: T;
+  categories?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        image?: T;
+        description?: T;
+      };
+  breaking?: T;
+  publishedAt?: T;
+  authors?: T;
+  populatedAuthors?:
+    | T
+    | {
+        id?: T;
+        name?: T;
+      };
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  color?: T;
+  description?: T;
+  generateSlug?: T;
+  slug?: T;
+  parent?: T;
+  breadcrumbs?:
+    | T
+    | {
+        doc?: T;
+        url?: T;
+        label?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1084,6 +1386,11 @@ export interface PagesSelect<T extends boolean = true> {
   layout?:
     | T
     | {
+        profileIntro?: T | ProfileIntroBlockSelect<T>;
+        timeline?: T | TimelineBlockSelect<T>;
+        storyMosaic?: T | StoryMosaicBlockSelect<T>;
+        proposals?: T | ProposalsBlockSelect<T>;
+        gallery?: T | GalleryBlockSelect<T>;
         cta?: T | CallToActionBlockSelect<T>;
         content?: T | ContentBlockSelect<T>;
         mediaBlock?: T | MediaBlockSelect<T>;
@@ -1103,6 +1410,104 @@ export interface PagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProfileIntroBlock_select".
+ */
+export interface ProfileIntroBlockSelect<T extends boolean = true> {
+  image?: T;
+  photos?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  title?: T;
+  subtitle?: T;
+  content?: T;
+  graphic?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TimelineBlock_select".
+ */
+export interface TimelineBlockSelect<T extends boolean = true> {
+  title?: T;
+  items?:
+    | T
+    | {
+        year?: T;
+        description?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StoryMosaicBlock_select".
+ */
+export interface StoryMosaicBlockSelect<T extends boolean = true> {
+  title?: T;
+  isPageTitle?: T;
+  subtitle?: T;
+  content?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  topGraphic?: T;
+  bottomGraphic?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProposalsBlock_select".
+ */
+export interface ProposalsBlockSelect<T extends boolean = true> {
+  title?: T;
+  intro?: T;
+  featureImage?: T;
+  items?:
+    | T
+    | {
+        title?: T;
+        color?: T;
+        summary?: T;
+        points?:
+          | T
+          | {
+              highlight?: T;
+              text?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GalleryBlock_select".
+ */
+export interface GalleryBlockSelect<T extends boolean = true> {
+  title?: T;
+  intro?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1190,41 +1595,12 @@ export interface FormBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "posts_select".
- */
-export interface PostsSelect<T extends boolean = true> {
-  title?: T;
-  heroImage?: T;
-  content?: T;
-  relatedPosts?: T;
-  categories?: T;
-  meta?:
-    | T
-    | {
-        title?: T;
-        image?: T;
-        description?: T;
-      };
-  publishedAt?: T;
-  authors?: T;
-  populatedAuthors?:
-    | T
-    | {
-        id?: T;
-        name?: T;
-      };
-  generateSlug?: T;
-  slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  credit?: T;
+  sourceUrl?: T;
   caption?: T;
   folder?: T;
   updatedAt?: T;
@@ -1315,21 +1691,13 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
+ * via the `definition` "subscribers_select".
  */
-export interface CategoriesSelect<T extends boolean = true> {
-  title?: T;
-  generateSlug?: T;
-  slug?: T;
-  parent?: T;
-  breadcrumbs?:
-    | T
-    | {
-        doc?: T;
-        url?: T;
-        label?: T;
-        id?: T;
-      };
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  name?: T;
+  status?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1339,6 +1707,10 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  position?: T;
+  role?: T;
+  avatar?: T;
+  bio?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1346,6 +1718,7 @@ export interface UsersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  resetPasswordRequestedAt?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -1632,31 +2005,192 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
+ * Contenido de la portada. Los cambios se ven en el sitio al guardar.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page".
+ */
+export interface HomePage {
+  id: number;
+  banner?: {
+    /**
+     * El texto alternativo de la imagen (en Medios) debe decir lo que dice el banner, para lectores de pantalla y buscadores.
+     */
+    image?: (number | null) | Media;
+    /**
+     * Versión vertical o cuadrada (ej. 1080 × 1350 px). Si no se sube, se usa la de escritorio, cuyo texto se verá pequeño en celular.
+     */
+    mobileImage?: (number | null) | Media;
+    /**
+     * Ruta interna (ej. /posts/mi-nota) o dirección completa.
+     */
+    url?: string | null;
+    newTab?: boolean | null;
+    welcomeEyebrow?: string | null;
+    welcomeTitle?: string | null;
+    welcomeText?: string | null;
+  };
+  highlights: {
+    enabled?: boolean | null;
+    title: string;
+  };
+  ring: {
+    enabled?: boolean | null;
+    /**
+     * Se escribe en mayúsculas y se repite con "•" hasta cerrar el círculo. Frases cortas (hasta 40 caracteres) se leen mejor.
+     */
+    text: string;
+    speed?: ('slow' | 'normal' | 'fast') | null;
+    title: string;
+    subtitle?: string | null;
+    /**
+     * Un párrafo breve. Deja una línea en blanco para separar párrafos.
+     */
+    content?: string | null;
+    /**
+     * Déjalo vacío para ocultar el botón.
+     */
+    buttonLabel?: string | null;
+    /**
+     * Ruta interna, ej. /mi-historia.
+     */
+    buttonUrl?: string | null;
+    /**
+     * Se recorta en círculo. En Medios, marca el punto focal sobre el rostro para centrarlo. Si no hay foto, la sección no se muestra.
+     */
+    image?: (number | null) | Media;
+    /**
+     * Ocupa toda la columna derecha, en blanco y negro. Sin foto, esa columna queda en azul tenue.
+     */
+    backgroundImage?: (number | null) | Media;
+  };
+  latest: {
+    enabled?: boolean | null;
+    eyebrow?: string | null;
+    title: string;
+    description?: string | null;
+    count?: ('3' | '6' | '9' | '10' | '12') | null;
+    /**
+     * Déjalo vacío para ocultarlo.
+     */
+    viewAllLabel?: string | null;
+    showExcerpt?: boolean | null;
+  };
+  facebook: {
+    enabled?: boolean | null;
+    /**
+     * Las tarjetas necesitan que el equipo técnico configure el acceso a la página. Mientras no esté, se muestra el recuadro oficial.
+     */
+    display?: ('widget' | 'cards') | null;
+    title: string;
+    description?: string | null;
+    /**
+     * Déjalo vacío para ocultar el botón.
+     */
+    buttonLabel?: string | null;
+  };
+  instagram: {
+    enabled?: boolean | null;
+    title: string;
+    description?: string | null;
+    /**
+     * Déjalo vacío para ocultar el botón.
+     */
+    buttonLabel?: string | null;
+    /**
+     * En Instagram, abre la publicación y copia la liga de la barra del navegador (o "…" → Copiar enlace). Sirven fotos, carruseles y Reels públicos.
+     */
+    posts?:
+      | {
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
  */
 export interface Header {
-  id: string;
+  id: number;
+  /**
+   * PNG o SVG con fondo transparente, en color oscuro (va sobre fondo blanco). Si se deja vacío se usa el logo oficial.
+   */
+  logo?: (number | null) | Media;
+  /**
+   * Imagen CUADRADA, idealmente PNG de 512 × 512 px o SVG, con un símbolo simple (se ve muy pequeño). Si se deja vacío se usa el icono predeterminado.
+   */
+  favicon?: (number | null) | Media;
+  topBarText?: string | null;
+  topBarTextMobile?: string | null;
+  /**
+   * Arrastra para reordenar. Usa el menú ⋯ de cada fila para duplicar o eliminar.
+   */
   navItems?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: string | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: string | Post;
-              } | null);
-          url?: string | null;
-          label: string;
-        };
+        label: string;
+        type: 'reference' | 'custom' | 'file' | 'submenu';
+        reference?:
+          | ({
+              relationTo: 'pages';
+              value: number | Page;
+            } | null)
+          | ({
+              relationTo: 'posts';
+              value: number | Post;
+            } | null);
+        /**
+         * Ruta interna (ej. /galeria) o dirección completa (ej. https://coahuila.gob.mx).
+         */
+        url?: string | null;
+        file?: (number | null) | Media;
+        newTab?: boolean | null;
+        children?:
+          | {
+              label: string;
+              type: 'reference' | 'custom' | 'file';
+              reference?:
+                | ({
+                    relationTo: 'pages';
+                    value: number | Page;
+                  } | null)
+                | ({
+                    relationTo: 'posts';
+                    value: number | Post;
+                  } | null);
+              /**
+               * Ruta interna (ej. /galeria) o dirección completa (ej. https://coahuila.gob.mx).
+               */
+              url?: string | null;
+              file?: (number | null) | Media;
+              newTab?: boolean | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Botón en color primario a la derecha del menú. Ej. "Únete" o "Contacto". Para abrir el correo usa una URL como mailto:contacto@manolojimenez.mx
+   */
+  cta: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1665,7 +2199,24 @@ export interface Header {
  * via the `definition` "footer".
  */
 export interface Footer {
-  id: string;
+  id: number;
+  /**
+   * Si se deja vacío se usa el mismo logotipo del Encabezado.
+   */
+  logo?: (number | null) | Media;
+  /**
+   * Convierte el logo a blanco para el fondo oscuro. Desactívalo si subiste un logo que ya es blanco o a color.
+   */
+  invertLogo?: boolean | null;
+  /**
+   * Texto breve bajo el logo del footer.
+   */
+  description?: string | null;
+  navTitle?: string | null;
+  /**
+   * Con el menú del Encabezado, el footer se actualiza solo cuando cambian las pestañas del menú (incluye las subpestañas).
+   */
+  linksSource?: ('header' | 'custom') | null;
   navItems?:
     | {
         link: {
@@ -1674,11 +2225,11 @@ export interface Footer {
           reference?:
             | ({
                 relationTo: 'pages';
-                value: string | Page;
+                value: number | Page;
               } | null)
             | ({
                 relationTo: 'posts';
-                value: string | Post;
+                value: number | Post;
               } | null);
           url?: string | null;
           label: string;
@@ -1686,27 +2237,176 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  contactTitle?: string | null;
+  contact?: {
+    /**
+     * Se muestra en el footer y en la barra superior del encabezado.
+     */
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+  };
+  /**
+   * Ligas de los iconos de redes que aparecen en la barra superior del encabezado y en el footer. Si la lista queda vacía, no se muestran iconos.
+   */
+  socialLinks?:
+    | {
+        platform: 'facebook' | 'x' | 'instagram' | 'youtube';
+        /**
+         * Dirección completa, ej. https://www.facebook.com/Manolo.Jimenez.Salinas
+         */
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Escribe {año} para mostrar el año actual automáticamente.
+   */
+  copyright?: string | null;
+  legend?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
+}
+/**
+ * Cómo aparece el sitio en Google, en la pestaña del navegador y al compartirlo en redes o WhatsApp.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  /**
+   * Se agrega al final del título de cada página, ej. "Mi Historia | Manolo Jiménez".
+   */
+  siteName: string;
+  /**
+   * Título completo de la página de inicio. Recomendado: menos de 60 caracteres.
+   */
+  defaultTitle: string;
+  /**
+   * Aparece bajo el título en Google y al compartir. Se usa en las páginas que no tienen descripción propia. Recomendado: 120–160 caracteres.
+   */
+  description: string;
+  /**
+   * La que se ve al compartir el sitio en Facebook, WhatsApp o X. Horizontal de 1200 × 630 px. Las noticias usan su propia foto.
+   */
+  shareImage?: (number | null) | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page_select".
+ */
+export interface HomePageSelect<T extends boolean = true> {
+  banner?:
+    | T
+    | {
+        image?: T;
+        mobileImage?: T;
+        url?: T;
+        newTab?: T;
+        welcomeEyebrow?: T;
+        welcomeTitle?: T;
+        welcomeText?: T;
+      };
+  highlights?:
+    | T
+    | {
+        enabled?: T;
+        title?: T;
+      };
+  ring?:
+    | T
+    | {
+        enabled?: T;
+        text?: T;
+        speed?: T;
+        title?: T;
+        subtitle?: T;
+        content?: T;
+        buttonLabel?: T;
+        buttonUrl?: T;
+        image?: T;
+        backgroundImage?: T;
+      };
+  latest?:
+    | T
+    | {
+        enabled?: T;
+        eyebrow?: T;
+        title?: T;
+        description?: T;
+        count?: T;
+        viewAllLabel?: T;
+        showExcerpt?: T;
+      };
+  facebook?:
+    | T
+    | {
+        enabled?: T;
+        display?: T;
+        title?: T;
+        description?: T;
+        buttonLabel?: T;
+      };
+  instagram?:
+    | T
+    | {
+        enabled?: T;
+        title?: T;
+        description?: T;
+        buttonLabel?: T;
+        posts?:
+          | T
+          | {
+              url?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
+  logo?: T;
+  favicon?: T;
+  topBarText?: T;
+  topBarTextMobile?: T;
   navItems?:
     | T
     | {
-        link?:
+        label?: T;
+        type?: T;
+        reference?: T;
+        url?: T;
+        file?: T;
+        newTab?: T;
+        children?:
           | T
           | {
+              label?: T;
               type?: T;
-              newTab?: T;
               reference?: T;
               url?: T;
-              label?: T;
+              file?: T;
+              newTab?: T;
+              id?: T;
             };
         id?: T;
+      };
+  cta?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -1717,6 +2417,11 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  logo?: T;
+  invertLogo?: T;
+  description?: T;
+  navTitle?: T;
+  linksSource?: T;
   navItems?:
     | T
     | {
@@ -1731,6 +2436,36 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  contactTitle?: T;
+  contact?:
+    | T
+    | {
+        email?: T;
+        phone?: T;
+        address?: T;
+      };
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  copyright?: T;
+  legend?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  siteName?: T;
+  defaultTitle?: T;
+  description?: T;
+  shareImage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1755,15 +2490,18 @@ export interface TaskSchedulePublish {
     locale?: string | null;
     doc?:
       | ({
-          relationTo: 'pages';
-          value: string | Page;
+          relationTo: 'posts';
+          value: number | Post;
         } | null)
       | ({
-          relationTo: 'posts';
-          value: string | Post;
+          relationTo: 'pages';
+          value: number | Page;
         } | null);
     global?: string | null;
-    user?: (string | null) | User;
+    user?: {
+      relationTo: 'users';
+      value: number | User;
+    } | null;
   };
   output?: unknown;
 }

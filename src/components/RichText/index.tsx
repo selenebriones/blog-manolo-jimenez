@@ -20,11 +20,18 @@ import type {
 } from '@/payload-types'
 import { BannerBlock } from '@/blocks/Banner/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
+import { GalleryGrid } from '@/blocks/Gallery/GalleryGrid'
+import type { Media } from '@/payload-types'
 import { cn } from '@/utilities/ui'
+
+/** Fotos seguidas agrupadas para mostrarse en filas (ver utilities/groupMediaBlocks). */
+type MediaRowProps = { blockType: 'mediaRow'; id: string; images: Media[] }
 
 type NodeTypes =
   | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps>
+  | SerializedBlockNode<
+      CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps | MediaRowProps
+    >
 
 const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
   const { value, relationTo } = linkNode.fields.doc!
@@ -52,6 +59,18 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) 
     ),
     code: ({ node }) => <CodeBlock className="col-start-2" {...node.fields} />,
     cta: ({ node }) => <CallToActionBlock {...node.fields} />,
+    mediaRow: ({ node }) => (
+      <div className="col-start-1 col-span-3 my-8">
+        <GalleryGrid
+          items={node.fields.images.map((image) => ({
+            id: `${node.fields.id}-${image.id}`,
+            image,
+            caption: null,
+          }))}
+          layout="grid"
+        />
+      </div>
+    ),
   },
 })
 

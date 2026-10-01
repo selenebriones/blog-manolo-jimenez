@@ -1,22 +1,23 @@
 import type { Metadata } from 'next'
-import { getServerSideURL } from './getURL'
 
-const defaultOpenGraph: Metadata['openGraph'] = {
-  type: 'website',
-  description: 'An open-source website built with Payload and Next.js.',
-  images: [
-    {
-      url: `${getServerSideURL()}/website-template-OG.webp`,
-    },
-  ],
-  siteName: 'Payload Website Template',
-  title: 'Payload Website Template',
-}
+import type { SiteSettingsData } from './getSiteSettings'
 
-export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {
+/**
+ * Open Graph (vista previa al compartir) con los datos del sitio como base.
+ * Los valores de la página o noticia (`og`) reemplazan a los del sitio.
+ */
+export const mergeOpenGraph = (
+  site: SiteSettingsData,
+  og?: Metadata['openGraph'],
+): Metadata['openGraph'] => {
+  const siteImages = site.shareImageUrl ? [{ url: site.shareImageUrl }] : undefined
+
   return {
-    ...defaultOpenGraph,
+    type: 'website',
+    siteName: site.siteName,
+    title: site.defaultTitle,
+    description: site.description,
     ...og,
-    images: og?.images ? og.images : defaultOpenGraph.images,
+    images: og?.images ?? siteImages,
   }
 }

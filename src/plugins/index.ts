@@ -13,8 +13,11 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
-const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
+/** Botón "Generar" del título SEO: titular + nombre del sitio (SEO y datos del sitio). */
+const generateTitle: GenerateTitle<Post | Page> = async ({ doc, req }) => {
+  const site = await req.payload.findGlobal({ slug: 'site-settings', depth: 0, req })
+  const siteName = site?.siteName || 'Manolo Jiménez'
+  return doc?.title ? `${doc.title} | ${siteName}` : site?.defaultTitle || siteName
 }
 
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {

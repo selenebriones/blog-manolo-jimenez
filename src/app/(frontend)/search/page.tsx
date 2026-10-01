@@ -1,88 +1,87 @@
 import type { Metadata } from 'next/types'
 
-import { CollectionArchive } from '@/components/CollectionArchive'
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import React from 'react'
+import { getPayload, type Where } from 'payload'
+import React, { Suspense } from 'react'
+
+import { postCardSelect } from '@/components/PostCard/select'
+import { PostGrid } from '@/components/PostGrid'
+import { SectionHeading } from '@/components/SectionHeading'
 import { Search } from '@/search/Component'
 import PageClient from './page.client'
-import { CardPostData } from '@/components/Card'
+
+const LIMIT = 24
 
 type Args = {
   searchParams: Promise<{
-    q: string
+    q?: string
   }>
 }
+
+/**
+ * Búsqueda de noticias. Los resultados usan la misma tarjeta que la portada (PostGrid).
+ * Busca en titular, extracto y descripción SEO; sin término muestra las más recientes.
+ */
 export default async function Page({ searchParams: searchParamsPromise }: Args) {
-  const { q: query } = await searchParamsPromise
+  const { q } = await searchParamsPromise
+  const query = q?.trim() ?? ''
   const payload = await getPayload({ config: configPromise })
 
+  const where: Where | undefined = query
+    ? {
+        or: [
+          { title: { like: query } },
+          { excerpt: { like: query } },
+          { 'meta.description': { like: query } },
+        ],
+      }
+    : undefined
+
   const posts = await payload.find({
-    collection: 'search',
+    collection: 'posts',
     depth: 1,
-    limit: 12,
-    select: {
-      title: true,
-      slug: true,
-      categories: true,
-      meta: true,
-    },
-    // pagination: false reduces overhead if you don't need totalDocs
-    pagination: false,
-    ...(query
-      ? {
-          where: {
-            or: [
-              {
-                title: {
-                  like: query,
-                },
-              },
-              {
-                'meta.description': {
-                  like: query,
-                },
-              },
-              {
-                'meta.title': {
-                  like: query,
-                },
-              },
-              {
-                slug: {
-                  like: query,
-                },
-              },
-            ],
-          },
-        }
-      : {}),
+    limit: LIMIT,
+    overrideAccess: false,
+    select: postCardSelect,
+    sort: '-publishedAt',
+    where,
   })
 
   return (
-    <div className="pt-24 pb-24">
+    <section className="bg-surface py-16 md:py-24">
       <PageClient />
-      <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none text-center">
-          <h1 className="mb-8 lg:mb-16">Search</h1>
+      <div className="container">
+        <SectionHeading
+          description="Encuentra noticias, anuncios y programas del Gobierno de Coahuila."
+          eyebrow="Noticias"
+          title="Buscar"
+        />
 
-          <div className="max-w-[50rem] mx-auto">
+        <div className="mb-10 max-w-3xl">
+          <Suspense>
             <Search />
-          </div>
+          </Suspense>
+          <p aria-live="polite" className="mt-4 text-ink-muted">
+            {query
+              ? `${posts.totalDocs} ${posts.totalDocs === 1 ? 'resultado' : 'resultados'} para “${query}”${posts.totalDocs > LIMIT ? ` (se muestran los ${LIMIT} más recientes)` : ''}`
+              : 'Noticias más recientes'}
+          </p>
         </div>
-      </div>
 
-      {posts.totalDocs > 0 ? (
-        <CollectionArchive posts={posts.docs as CardPostData[]} />
-      ) : (
-        <div className="container">No results found.</div>
-      )}
-    </div>
+        {posts.docs.length > 0 ? (
+          <PostGrid posts={posts.docs} />
+        ) : (
+          <p className="rounded-lg bg-white p-10 text-center text-ink-muted shadow-card">
+            No encontramos noticias con “{query}”. Prueba con otra palabra.
+          </p>
+        )}
+      </div>
+    </section>
   )
 }
 
 export function generateMetadata(): Metadata {
   return {
-    title: `Payload Website Template Search`,
+    title: 'Buscar',
   }
 }
