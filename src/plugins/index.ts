@@ -3,6 +3,7 @@ import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { Plugin } from 'payload'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
@@ -91,5 +92,17 @@ export const plugins: Plugin[] = [
         return [...defaultFields, ...searchFields]
       },
     },
+  }),
+  // Fotos en Vercel Blob (producción). Vercel no conserva los archivos subidos al servidor:
+  // sin esto, las fotos se perderían en cada despliegue. Sin `BLOB_READ_WRITE_TOKEN` (en local)
+  // se queda desactivado y las fotos se guardan en public/media como siempre.
+  vercelBlobStorage({
+    enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+    collections: { media: true },
+    // Mismo esquema de base de datos en local y en producción (las migraciones coinciden)
+    alwaysInsertFields: true,
+    // Las fotos suben directo del navegador a Blob: Vercel limita las peticiones a 4.5 MB
+    clientUploads: true,
   }),
 ]
