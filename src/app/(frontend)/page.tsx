@@ -8,7 +8,8 @@ import React from 'react'
 import { BrandStripe } from '@/components/BrandStripe'
 import { FacebookFeed } from '@/components/FacebookFeed'
 import { HomeBanner } from '@/components/HomeBanner'
-import { InstagramFeed } from '@/components/InstagramFeed'
+// Instagram en pausa (ver el bloque comentado al final de la portada)
+// import { InstagramFeed } from '@/components/InstagramFeed'
 import { NewsTiles } from '@/components/NewsTiles'
 import { postCardSelect } from '@/components/PostCard/select'
 import { PostGrid } from '@/components/PostGrid'
@@ -29,7 +30,7 @@ import { getSiteSettings } from '@/utilities/getSiteSettings'
  * 2. "A pasos de gigante": texto de presentación + foto en círculo con la frase girando alrededor.
  * 3. "Coahuila Pa' Delante": las 3 noticias más recientes en mosaico.
  * 4. Más noticias: cuadrícula que continúa después de las 3 del mosaico (sin repetir; cantidad editable).
- * 6. Síguenos en Instagram: 3 publicaciones elegidas en el admin (código oficial de Instagram).
+ * 6. Síguenos en Instagram (en pausa, comentado): 3 publicaciones elegidas en el admin.
  * 5. Síguenos en Facebook: recuadro oficial de Facebook o tarjetas vía Graph API (utilities/facebook).
  *
  * Textos, cantidad de noticias y visibilidad de cada sección se editan en
@@ -67,7 +68,7 @@ export default async function HomePage() {
   const ringBackground = typeof ring.backgroundImage === 'object' ? ring.backgroundImage : null
   const latest = withDefaults(settings?.latest, homePageDefaults.latest)
   const facebook = withDefaults(settings?.facebook, homePageDefaults.facebook)
-  const instagram = withDefaults(settings?.instagram, homePageDefaults.instagram)
+  // const instagram = withDefaults(settings?.instagram, homePageDefaults.instagram)
 
   const highlightCount = highlights.enabled ? HIGHLIGHT_COUNT : 0
   const latestCount = latest.enabled ? Number(latest.count) || 9 : 0
@@ -78,8 +79,8 @@ export default async function HomePage() {
   const facebookPageUrl =
     footer?.socialLinks?.find((link) => link.platform === 'facebook')?.url ??
     defaultSocialLinks[0]!.url
-  const instagramProfileUrl =
-    footer?.socialLinks?.find((link) => link.platform === 'instagram')?.url ?? null
+  // const instagramProfileUrl =
+  //   footer?.socialLinks?.find((link) => link.platform === 'instagram')?.url ?? null
 
   const { docs: recent } = await payload.find({
     collection: 'posts',
@@ -189,6 +190,8 @@ export default async function HomePage() {
         />
       )}
 
+      {/* Instagram en pausa por ahora: para volver a mostrarlo, quitar los comentarios de este
+          bloque, del import y de `instagram` / `instagramProfileUrl` más arriba.
       {instagram.enabled && (
         <InstagramFeed
           buttonLabel={instagram.buttonLabel}
@@ -197,7 +200,7 @@ export default async function HomePage() {
           profileUrl={instagramProfileUrl}
           title={instagram.title}
         />
-      )}
+      )} */}
     </>
   )
 }
