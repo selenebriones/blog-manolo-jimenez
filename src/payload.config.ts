@@ -31,6 +31,10 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
+      // Botón naranja de "Cerrar sesión" (con texto) en lugar del ícono de Payload
+      logout: {
+        Button: '@/components/LogoutButton#LogoutButton',
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),

@@ -1,0 +1,31 @@
+// Botón naranja de "Cerrar sesión" en el menú lateral del admin
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 6px;
+  background: #ea580c;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: #c2410c;
+    color: #fff;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  // El ícono de Payload hereda el color del texto
+  svg * {
+    stroke: currentColor;
+  }
+}

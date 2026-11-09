@@ -44,6 +44,9 @@ const nextConfig: NextConfig = {
 
     return webpackConfig
   },
+  // Sin el círculo "N" de Next.js en local: tapaba el botón de "Cerrar sesión" del admin.
+  // Los errores se siguen mostrando en pantalla cuando ocurren.
+  devIndicators: false,
   reactStrictMode: true,
   redirects,
   turbopack: {
