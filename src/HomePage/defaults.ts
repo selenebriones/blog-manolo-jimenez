@@ -44,7 +44,7 @@ export const homePageDefaults = {
   facebook: {
     enabled: true,
     display: 'widget',
-    title: 'Síguenos en Facebook',
+    title: 'Síguenos en redes sociales',
     description: 'Lo más reciente de nuestras redes, cerca de la gente todos los días.',
     buttonLabel: 'Ir a Facebook',
   } satisfies Partial<NonNullable<HomePage['facebook']>>,

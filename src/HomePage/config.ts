@@ -298,10 +298,12 @@ export const HomePage: GlobalConfig = {
           ],
         },
         {
+          // El nombre interno sigue siendo `facebook` para no mover datos; ahora es la sección de
+          // todas las redes. `display` y `buttonLabel` se ocultan (eran del recuadro de Facebook).
           name: 'facebook',
-          label: 'Facebook',
+          label: 'Redes sociales',
           description:
-            'Publicaciones recientes de la página de Facebook (la liga se toma de Pie de página → Redes sociales).',
+            'Una tarjeta por cada red social. Las redes y sus ligas se editan en Pie de página → Contacto y redes → Redes sociales.',
           fields: [
             {
               name: 'enabled',
@@ -325,6 +327,7 @@ export const HomePage: GlobalConfig = {
                 },
               ],
               admin: {
+                hidden: true,
                 layout: 'vertical',
                 description:
                   'Las tarjetas necesitan que el equipo técnico configure el acceso a la página. Mientras no esté, se muestra el recuadro oficial.',
@@ -348,7 +351,7 @@ export const HomePage: GlobalConfig = {
               type: 'text',
               label: 'Texto del botón a la página de Facebook',
               defaultValue: d.facebook.buttonLabel,
-              admin: { description: 'Déjalo vacío para ocultar el botón.' },
+              admin: { hidden: true, description: 'Déjalo vacío para ocultar el botón.' },
             },
           ],
         },

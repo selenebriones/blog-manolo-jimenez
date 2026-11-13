@@ -6,7 +6,6 @@ import { getPayload } from 'payload'
 import React from 'react'
 
 import { BrandStripe } from '@/components/BrandStripe'
-import { FacebookFeed } from '@/components/FacebookFeed'
 import { HomeBanner } from '@/components/HomeBanner'
 // Instagram en pausa (ver el bloque comentado al final de la portada)
 // import { InstagramFeed } from '@/components/InstagramFeed'
@@ -15,9 +14,8 @@ import { postCardSelect } from '@/components/PostCard/select'
 import { PostGrid } from '@/components/PostGrid'
 import { RotatingBadge } from '@/components/RotatingBadge'
 import { SectionHeading } from '@/components/SectionHeading'
+import { SocialNetworks } from '@/components/SocialNetworks'
 import { homePageDefaults } from '@/HomePage/defaults'
-import { defaultSocialLinks } from '@/Header/defaults'
-import { type FacebookPost, getFacebookPosts, hasFacebookCredentials } from '@/utilities/facebook'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import { getSiteSettings } from '@/utilities/getSiteSettings'
 
@@ -30,8 +28,10 @@ import { getSiteSettings } from '@/utilities/getSiteSettings'
  * 2. "A pasos de gigante": texto de presentación + foto en círculo con la frase girando alrededor.
  * 3. "Coahuila Pa' Delante": las 3 noticias más recientes en mosaico.
  * 4. Más noticias: cuadrícula que continúa después de las 3 del mosaico (sin repetir; cantidad editable).
+ * 5. Síguenos en redes sociales: una tarjeta por cada red de Pie de página → Redes sociales.
+ *    (Antes era el recuadro de Facebook; el componente FacebookFeed sigue en el proyecto por si se
+ *    conecta la API de Meta.)
  * 6. Síguenos en Instagram (en pausa, comentado): 3 publicaciones elegidas en el admin.
- * 5. Síguenos en Facebook: recuadro oficial de Facebook o tarjetas vía Graph API (utilities/facebook).
  *
  * Textos, cantidad de noticias y visibilidad de cada sección se editan en
  * Configuración del sitio → Página de inicio (global `home-page`).
@@ -76,9 +76,7 @@ export default async function HomePage() {
   // Una sola consulta: las primeras 3 van al mosaico y las siguientes a la cuadrícula,
   // así ninguna noticia se repite en la portada. `overrideAccess: false` = solo publicadas.
   const footer = await getCachedGlobal('footer', 1)()
-  const facebookPageUrl =
-    footer?.socialLinks?.find((link) => link.platform === 'facebook')?.url ??
-    defaultSocialLinks[0]!.url
+  const socialLinks = (footer?.socialLinks ?? []).map(({ platform, url }) => ({ platform, url }))
   // const instagramProfileUrl =
   //   footer?.socialLinks?.find((link) => link.platform === 'instagram')?.url ?? null
 
@@ -90,29 +88,6 @@ export default async function HomePage() {
     overrideAccess: false,
     select: postCardSelect,
   })
-
-  // Facebook: "cards" usa la API de Meta (token en .env). Sin token, en desarrollo se ve una vista
-  // previa con noticias; en producción se cae al recuadro oficial. "widget" = recuadro oficial.
-  const wantsCards = facebook.display === 'cards'
-  const hasToken = hasFacebookCredentials()
-  const showFacebookPreview = wantsCards && !hasToken && process.env.NODE_ENV === 'development'
-  const facebookMode: 'widget' | 'cards' =
-    wantsCards && (hasToken || showFacebookPreview) ? 'cards' : 'widget'
-  const facebookPosts: FacebookPost[] =
-    !facebook.enabled || facebookMode === 'widget'
-      ? []
-      : showFacebookPreview
-        ? recent.slice(0, 3).map((post) => ({
-            id: `preview-${post.id}`,
-            message: post.excerpt ?? post.title,
-            image:
-              post.heroImage && typeof post.heroImage === 'object'
-                ? (post.heroImage.url ?? null)
-                : null,
-            url: facebookPageUrl,
-            createdAt: post.publishedAt ?? new Date().toISOString(),
-          }))
-        : await getFacebookPosts(3)
 
   const highlightPosts = recent.slice(0, highlightCount)
   const latestPosts = recent.slice(highlightCount, highlightCount + latestCount)
@@ -178,14 +153,9 @@ export default async function HomePage() {
       )}
 
       {facebook.enabled && (
-        <FacebookFeed
-          buttonLabel={facebook.buttonLabel}
+        <SocialNetworks
           description={facebook.description}
-          isPreview={showFacebookPreview}
-          mode={facebookMode}
-          pageName="Manolo Jiménez Salinas"
-          pageUrl={facebookPageUrl}
-          posts={facebookPosts}
+          links={socialLinks}
           title={facebook.title}
         />
       )}

@@ -10,6 +10,7 @@ export const socialPlatformOptions = [
   { label: 'X (Twitter)', value: 'x' },
   { label: 'Instagram', value: 'instagram' },
   { label: 'YouTube', value: 'youtube' },
+  { label: 'TikTok', value: 'tiktok' },
 ] as const
 
 /** Footer institucional: logotipo, descripción, enlaces, contacto, redes y barra inferior. */
@@ -143,7 +144,7 @@ export const Footer: GlobalConfig = {
               labels: { singular: 'Red social', plural: 'Redes sociales' },
               admin: {
                 description:
-                  'Ligas de los iconos de redes que aparecen en la barra superior del encabezado y en el footer. Si la lista queda vacía, no se muestran iconos.',
+                  'Ligas de las redes que aparecen en la barra superior del encabezado, en el footer y en la sección "Redes sociales" del inicio (en este orden). Si la lista queda vacía, no se muestran.',
               },
               fields: [
                 {

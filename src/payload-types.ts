@@ -2143,11 +2143,11 @@ export interface Footer {
     address?: string | null;
   };
   /**
-   * Ligas de los iconos de redes que aparecen en la barra superior del encabezado y en el footer. Si la lista queda vacía, no se muestran iconos.
+   * Ligas de las redes que aparecen en la barra superior del encabezado, en el footer y en la sección "Redes sociales" del inicio (en este orden). Si la lista queda vacía, no se muestran.
    */
   socialLinks?:
     | {
-        platform: 'facebook' | 'x' | 'instagram' | 'youtube';
+        platform: 'facebook' | 'x' | 'instagram' | 'youtube' | 'tiktok';
         /**
          * Dirección completa, ej. https://www.facebook.com/Manolo.Jimenez.Salinas
          */
