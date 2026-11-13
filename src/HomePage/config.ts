@@ -302,9 +302,18 @@ export const HomePage: GlobalConfig = {
           // todas las redes. `display` y `buttonLabel` se ocultan (eran del recuadro de Facebook).
           name: 'facebook',
           label: 'Redes sociales',
-          description:
-            'Una tarjeta por cada red social. Las redes y sus ligas se editan en Pie de página → Contacto y redes → Redes sociales.',
+          description: 'Una tarjeta por cada red social.',
           fields: [
+            {
+              // Solo un aviso con botón al Pie de página (no guarda nada)
+              name: 'socialLinksNotice',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/HomePage/components/SocialLinksNotice#SocialLinksNotice',
+                },
+              },
+            },
             {
               name: 'enabled',
               type: 'checkbox',
